@@ -53,8 +53,8 @@ CaenDig::CaenDig(const char *portName, int linkType, int linkNum, int conetNode,
     setStringParam(modelName_,      boardInfo_.ModelName);
     setIntegerParam(modelNumber_,   boardInfo_.Model);
     setIntegerParam(numChannels_,   boardInfo_.Channels);
-    setStringParam(ROCFirmware_,     boardInfo_.ROC_FirmwareRel);
-    setStringParam(AMCFirmware_,     boardInfo_.AMC_FirmwareRel);
+    setStringParam(ROCFirmware_,    boardInfo_.ROC_FirmwareRel);
+    setStringParam(AMCFirmware_,    boardInfo_.AMC_FirmwareRel);
     setIntegerParam(serialNumber_,  boardInfo_.SerialNumber);
 }
 
