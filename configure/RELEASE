@@ -24,6 +24,8 @@ TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top
 # asyn
 ASYN = /corvette/home/epics/devel/asyn-4-29
 
+CAEN_DIG = /corvette/home/epics/devel/CaenDig
+
 # EPICS_BASE usually appears last so other apps can override stuff:
 EPICS_BASE=/usr/local/epics/base-3.14.12.5
 
