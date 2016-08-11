@@ -1,0 +1,58 @@
+# Database for CAEN Digitizers
+
+record(stringin,"$(P)$(R)ModelName") {
+    field(DESC, "Model Name")
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT) 0)MODEL_NAME")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin,"$(P)$(R)ModelNumber") {
+    field(DESC, "Model Number")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT) 0)MODEL_NUMBER")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin,"$(P)$(R)NumChannels") {
+    field(DESC, "Number of input channels")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT) 0)NUM_CHANNELS")
+}
+
+record(waveform,"$(P)$(R)ROCFirmware") {
+    field(DESC, "ROC Firmware")
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT) 0)ROC_FIRMWARE")
+    field(FTVL, "CHAR")
+    field(NELM, "256")
+    field(SCAN, "I/O Intr")
+}
+
+record(waveform,"$(P)$(R)AMCFirmware") {
+    field(DESC, "AMC Firmware")
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT) 0)AMC_FIRMWARE")
+    field(FTVL, "CHAR")
+    field(NELM, "256")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin,"$(P)$(R)SerialNumber") {
+    field(DESC, "Serial Number")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT) 0)SERIAL_NUMBER")
+    field(SCAN, "I/O Intr")
+}
+
+record(bo,"$(P)$(R)Acquire") {
+    field(DESC, "Acquire On/Off")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT) 0)ACQUIRE")
+    field(ZNAM, "Stop")
+    field(ONAM, "Acquire")
+}
+
+record(asyn, "$(P)$(R)Asyn") {
+    field(PORT, "$(PORT)")
+}
