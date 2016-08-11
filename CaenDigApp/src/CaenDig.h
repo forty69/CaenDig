@@ -4,6 +4,7 @@
 #define ROCFirmwareString   "ROC_FIRMWARE"
 #define AMCFirmwareString   "AMC_FIRMWARE"
 #define serialNumberString  "SERIAL_NUMBER"
+#define acquireString       "ACQUIRE"
 
 class CaenDig : public asynPortDriver {
 public:
@@ -21,7 +22,8 @@ protected:
     int ROCFirmware_;
     int AMCFirmware_;
     int serialNumber_;
-    #define LAST_CAENDIG_PARAM serialNumber_
+    int acquire_;
+    #define LAST_CAENDIG_PARAM acquire_
 
 private:
     int linkType_;
