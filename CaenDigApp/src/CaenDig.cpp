@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <iocsh.h>
 #include <epicsString.h>
 #include <asynPortDriver.h>
@@ -32,6 +34,8 @@ CaenDig::CaenDig(const char *portName, int linkType, int linkNum, int conetNode,
     createParam(ROCFirmwareString,  asynParamOctet, &ROCFirmware_);
     createParam(AMCFirmwareString,  asynParamOctet, &AMCFirmware_);
     createParam(serialNumberString, asynParamInt32, &serialNumber_);
+    createParam(acquireString,      asynParamInt32, &acquire_);
+    memset(&boardInfo_, 0, sizeof(boardInfo_));
     
     // Open the digitizer
     errorCode = CAEN_DGTZ_OpenDigitizer((CAEN_DGTZ_ConnectionType)linkType, linkNum, conetNode, VMEBaseAddress, &handle_);
@@ -56,17 +60,37 @@ CaenDig::CaenDig(const char *portName, int linkType, int linkNum, int conetNode,
     setStringParam(ROCFirmware_,    boardInfo_.ROC_FirmwareRel);
     setStringParam(AMCFirmware_,    boardInfo_.AMC_FirmwareRel);
     setIntegerParam(serialNumber_,  boardInfo_.SerialNumber);
+    callParamCallbacks();
 }
 
 asynStatus CaenDig::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     int addr;
     int function = pasynUser->reason;
-    int status = 0;
+    CAEN_DGTZ_ErrorCode status;
     static const char *functionName = "writeInt32";
 
     this->getAddress(pasynUser, &addr);
     setIntegerParam(addr, function, value);
+    
+    if (function == acquire_) {
+        if (value) {
+            status = CAEN_DGTZ_SWStartAcquisition(handle_);
+            if (status != CAEN_DGTZ_Success) {
+                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, 
+                    "%s::%s error calling CAEN_DGTZ_SWStartAcquisition, error=%d\n", 
+                    driverName, functionName, status);
+            }
+        }
+        else {
+            status = CAEN_DGTZ_SWStopAcquisition(handle_);
+            if (status != CAEN_DGTZ_Success) {
+                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, 
+                    "%s::%s error calling CAEN_DGTZ_SWStopAcquisition, error=%d\n", 
+                    driverName, functionName, status);
+            }
+        }
+    }
 
     callParamCallbacks(addr);
     if (status == 0) {
