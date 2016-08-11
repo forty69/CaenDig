@@ -30,4 +30,4 @@ private:
     CAEN_DGTZ_BoardInfo_t boardInfo_;
 };
 
-#define NUM_PARAMS ((int)(&FIRST_CAENDIG_PARAM - &LAST_CAENDIG_PARAM + 1))
+#define NUM_PARAMS ((int)(&LAST_CAENDIG_PARAM - &FIRST_CAENDIG_PARAM + 1))
