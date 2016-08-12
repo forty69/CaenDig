@@ -5,6 +5,8 @@
 #define AMCFirmwareString   "AMC_FIRMWARE"
 #define serialNumberString  "SERIAL_NUMBER"
 #define acquireString       "ACQUIRE"
+#define readoutString	      "READOUT"
+
 
 class CaenDig : public asynPortDriver {
 public:
@@ -23,6 +25,7 @@ protected:
     int AMCFirmware_;
     int serialNumber_;
     int acquire_;
+    int readout_;
     #define LAST_CAENDIG_PARAM acquire_
 
 private:
