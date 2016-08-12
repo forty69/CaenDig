@@ -11,12 +11,14 @@
 
 // Maximum number of digitizer input channels
 #define MAX_SIGNALS 32
+#define MAXNB 1
 
 static const char *driverName = "CaenDig";
 
 
+
 CaenDig::CaenDig(const char *portName, int linkType, int linkNum, int conetNode, int VMEBaseAddress)
-    : asynPortDriver(portName, MAX_SIGNALS, NUM_PARAMS, 
+    : asynPortDriver(portName, MAX_SIGNALS, NUM_PARAMS,
       asynInt32Mask | asynFloat64Mask | asynOctetMask | asynDrvUserMask,
       asynInt32Mask | asynFloat64Mask | asynOctetMask,
       ASYN_MULTIDEVICE | ASYN_CANBLOCK,
@@ -35,22 +37,24 @@ CaenDig::CaenDig(const char *portName, int linkType, int linkNum, int conetNode,
     createParam(AMCFirmwareString,  asynParamOctet, &AMCFirmware_);
     createParam(serialNumberString, asynParamInt32, &serialNumber_);
     createParam(acquireString,      asynParamInt32, &acquire_);
+    createParam(readoutString,      asynParamInt32, &readout_);
     memset(&boardInfo_, 0, sizeof(boardInfo_));
-    
+
+
     // Open the digitizer
     errorCode = CAEN_DGTZ_OpenDigitizer((CAEN_DGTZ_ConnectionType)linkType, linkNum, conetNode, VMEBaseAddress, &handle_);
     if (errorCode != CAEN_DGTZ_Success) {
-        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, 
-            "%s::%s error calling CAEN_DGTZ_OpenDigitizer, error=%d\n", 
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+            "%s::%s error calling CAEN_DGTZ_OpenDigitizer, error=%d\n",
             driverName, functionName, errorCode);
         return;
     }
-    
+
     // Get information about the board and set parameters
     errorCode = CAEN_DGTZ_GetInfo(handle_, &boardInfo_);
     if (errorCode != CAEN_DGTZ_Success) {
-        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, 
-            "%s::%s error calling CAEN_DGTZ_GetInfo, error=%d\n", 
+        asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+            "%s::%s error calling CAEN_DGTZ_GetInfo, error=%d\n",
             driverName, functionName, errorCode);
         return;
     }
@@ -65,28 +69,51 @@ CaenDig::CaenDig(const char *portName, int linkType, int linkNum, int conetNode,
 
 asynStatus CaenDig::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
+
     int addr;
+    uint32_t i;
+    char *evtPtr;
+    CAEN_DGTZ_EventInfo_t eventInfo_;
+    CAEN_DGTZ_UINT16_EVENT_t *evt;
     int function = pasynUser->reason;
-    CAEN_DGTZ_ErrorCode status;
+    CAEN_DGTZ_ErrorCode status=CAEN_DGTZ_Success;
+    char *buffer = NULL;
+    uint32_t size, bsize;
+    uint32_t numEvents;
+    int count;
     static const char *functionName = "writeInt32";
 
     this->getAddress(pasynUser, &addr);
     setIntegerParam(addr, function, value);
-    
+
     if (function == acquire_) {
         if (value) {
             status = CAEN_DGTZ_SWStartAcquisition(handle_);
             if (status != CAEN_DGTZ_Success) {
-                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, 
-                    "%s::%s error calling CAEN_DGTZ_SWStartAcquisition, error=%d\n", 
+                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                    "%s::%s error calling CAEN_DGTZ_SWStartAcquisition, error=%d\n",
                     driverName, functionName, status);
+            }
+            status= CAEN_DGTZ_MallocReadoutBuffer(handle_,&buffer,&size);
+
+            while (1) {
+                status= CAEN_DGTZ_SendSWtrigger(handle_);
+                status= CAEN_DGTZ_ReadData(handle_, CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, buffer, &bsize);
+                status= CAEN_DGTZ_GetNumEvents(handle_, buffer, bsize, &numEvents);
+                printf(".");
+                count +=numEvents;
+                for (i=0;i<numEvents;i++) {
+                    status= CAEN_DGTZ_GetEventInfo(handle_, buffer, bsize, i, &eventInfo_, &evtPtr);
+                    status= CAEN_DGTZ_DecodeEvent(handle_, evtPtr, (void **)&evt);
+                    status= CAEN_DGTZ_FreeEvent(handle_, (void **)&evt);
+                }
             }
         }
         else {
             status = CAEN_DGTZ_SWStopAcquisition(handle_);
             if (status != CAEN_DGTZ_Success) {
-                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, 
-                    "%s::%s error calling CAEN_DGTZ_SWStopAcquisition, error=%d\n", 
+                asynPrint(pasynUserSelf, ASYN_TRACE_ERROR,
+                    "%s::%s error calling CAEN_DGTZ_SWStopAcquisition, error=%d\n",
                     driverName, functionName, status);
             }
         }
@@ -130,7 +157,7 @@ asynStatus CaenDig::writeFloat64(asynUser *pasynUser, epicsFloat64 value)
 
 void CaenDig::report(FILE *fp, int details)
 {
-    fprintf(fp, "Port: %s, linkType=%d, linkNum=%d\n", 
+    fprintf(fp, "Port: %s, linkType=%d, linkNum=%d\n",
           this->portName, linkType_, linkNum_);
     if (details >= 1) {
         fprintf(fp, "  boardInfo.ModelName=%s\n",         boardInfo_.ModelName);
