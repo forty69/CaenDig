@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include "CAENDigitizer.h"
-
 #define CAEN_USE_DIGITIZERS
 #define IGNORE_DPP_DEPRECATED
 
