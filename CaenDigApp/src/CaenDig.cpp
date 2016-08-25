@@ -58,6 +58,16 @@ CaenDig::CaenDig(const char *portName, int linkType, int linkNum, int conetNode,
             driverName, functionName, errorCode);
         return;
     }
+    errorCode = CAEN_DGTZ_Reset(handle_);
+    errorCode = CAEN_DGTZ_GetInfo(handle_, &boardInfo_);
+    errorCode = CAEN_DGTZ_SetRecordLength(handle_,1023);
+    errorCode = CAEN_DGTZ_SetChannelEnableMask(handle_,11111111);
+    errorCode = CAEN_DGTZ_SetChannelTriggerThreshold(handle,0,1000);
+    errorCode = CAEN_DGTZ_SetChannelSelfTrigger(handle_,CAEN_DGTZ_TRGMODE_ACQ_ONLY,1);
+    errorCode = CAEN_DGTZ_SetSWTriggerMode(handle_,CAEN_DGTZ_TRGMODE_ACQ_ONLY);
+    errorCode = CAEN_DGTZ_SetMaxNumEventsBLT(handle_,3);
+    errorCode = CAEN_DGTZ_SetAcquisitionMode(handle_,CAEN_DGTZ_SW_CONTROLLED);
+
     setStringParam(modelName_,      boardInfo_.ModelName);
     setIntegerParam(modelNumber_,   boardInfo_.Model);
     setIntegerParam(numChannels_,   boardInfo_.Channels);
@@ -100,12 +110,15 @@ asynStatus CaenDig::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 status= CAEN_DGTZ_SendSWtrigger(handle_);
                 status= CAEN_DGTZ_ReadData(handle_, CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT, buffer, &bsize);
                 status= CAEN_DGTZ_GetNumEvents(handle_, buffer, bsize, &numEvents);
-                printf(".");
+
                 count +=numEvents;
                 for (i=0;i<numEvents;i++) {
+                    for (int j=0; j<=4096;j++){
                     status= CAEN_DGTZ_GetEventInfo(handle_, buffer, bsize, i, &eventInfo_, &evtPtr);
                     status= CAEN_DGTZ_DecodeEvent(handle_, evtPtr, (void **)&evt);
+                    setIntegerParam(readout_,evt->DataChannel[0][j]);
                     status= CAEN_DGTZ_FreeEvent(handle_, (void **)&evt);
+                    }
                 }
             }
         }
